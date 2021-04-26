@@ -322,7 +322,7 @@ id_str ids_orient[] =
 static int str_to_id(const char *str, id_str ids[], size_t len)
 {
     if (str==NULL) return -1;
-    size_t i;
+    uint i;
     for (i=0; i<len && strcmp(str, ids[i].str); ++i);
     if (i==len)
     {
@@ -360,7 +360,7 @@ static void cmd_free_args(cmd_param_head * params)
 
 static void cmd_list_free(CmdList &cmd_list)
 {
-for (Command *cmd : cmd_list)
+    for (Command *cmd : cmd_list)
     {
         cmd_free_args(&(cmd->params));
         cmd->page_ranges.clear();
@@ -876,7 +876,7 @@ static bool cmd_exec(Command *cmd, PdfDocument &doc, bool test)
 
 static void cmd_list_exec(CmdList &cmd_list, PdfDocument &doc, bool test)
 {
-for (Command *cmd : cmd_list)
+    for (Command *cmd : cmd_list)
     {
         if (not cmd_exec(cmd, doc, test))
         {
@@ -1134,7 +1134,7 @@ static bool cmd_new(PdfDocument &doc, Param params[], PageRanges &pages)
     else
     {
         pages.sort();
-for (int page_num : pages)
+        for (int page_num : pages)
         {
             doc.newBlankPage(page_num);
         }
@@ -1172,7 +1172,7 @@ static bool cmd_modulo(PdfDocument &doc, Param params[], PageRanges &pages)
 
     for (int i=0; i<pages_count; i+=modulo)
     {
-for (auto range : pages.array)
+        for (auto range : pages.array)
         {
             if (range.begin==-1) // -1 = last page ($)
             {
@@ -1368,7 +1368,7 @@ static bool cmd_rotate (PdfDocument &doc, Param params[], PageRanges &pages)
     Matrix rot_matrix;
     rot_matrix.rotate(angle);
 
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         Rect page_size = page.pageSize();
@@ -1397,7 +1397,7 @@ static bool cmd_flip (PdfDocument &doc, Param params[], PageRanges &pages)
 {
     int mode = str_to_id(params[0].str, ids_orient, get_ids_len(ids_orient));
 
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         Rect page_size = page.pageSize();
@@ -1442,7 +1442,7 @@ static bool cmd_text (PdfDocument &doc, Param params[], PageRanges &pages)
 
 static bool cmd_line (PdfDocument &doc, Param params[], PageRanges &pages)
 {
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         page.drawLine(Point(params[0].real, params[1].real),
@@ -1477,7 +1477,7 @@ static bool cmd_spaper (PdfDocument &doc, Param params[], PageRanges &pages)
 
 static bool cmd_pinfo (PdfDocument &doc, Param params[], PageRanges &pages)
 {
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         const char *bbox_type = page.bbox_is_cropbox ? "CropBox" : "TrimBox";

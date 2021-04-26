@@ -1,16 +1,16 @@
 /* This file is a part of pdfcook program, which is GNU GPLv2 licensed */
-#include "pdf_doc.h"
 #include "common.h"
+#include "pdf_doc.h"
 #include "debug.h"
 #include <set>
 
 static void updateRefs(PdfDocument &doc);
 static void deleteUnusedObjects(PdfDocument &doc);
 
-static DictFilter trailer_filter( { "Size", "Root", "ID"});
-static DictFilter catalog_filter( { "Pages", "Type"});
-static DictFilter page_filter( { "Type", "Parent", "Resources", "Contents" });
-static DictFilter xobject_filter( { "Type", "Subtype", "FormType", "BBox", "Resources", "Length", "Filter"});
+static DictFilter trailer_filter({ "Size", "Root", "ID"});
+static DictFilter catalog_filter({ "Pages", "Type"});
+static DictFilter page_filter({ "Type", "Parent", "Resources", "Contents" });
+static DictFilter xobject_filter({ "Type", "Subtype", "FormType", "BBox", "Resources", "Length", "Filter"});
 
 // These standard 14 font names are supported by all PDF viewers
 static std::set<std::string> standard_fonts(
@@ -24,7 +24,7 @@ static std::set<std::string> standard_fonts(
 void print_font_names()
 {
     fprintf(stderr, "Standard 14 Fonts :\n");
-for (auto font : standard_fonts)
+    for (auto font : standard_fonts)
     {
         fprintf(stderr, "    %s\n", font.c_str());
     }
@@ -486,7 +486,7 @@ PdfDocument:: mergeDocument(PdfDocument &doc)
     }
     updateRefs(doc);
 
-for (auto &page : doc.page_list)
+    for (auto &page : doc.page_list)
     {
         page.doc = this;
         page_list.append(page);
@@ -514,19 +514,19 @@ static void flag_used_objects (PdfObject *obj, ObjectTable &table)
     case PDF_OBJ_NULL:
         return;
     case PDF_OBJ_ARRAY:
-for (auto it : *obj->array)
+        for (auto it : *obj->array)
         {
             flag_used_objects(it, table);
         }
         return;
     case PDF_OBJ_DICT:
-for (auto it : *obj->dict)
+        for (auto it : *obj->dict)
         {
             flag_used_objects(it.second, table);
         }
         return;
     case PDF_OBJ_STREAM:
-for (auto it : obj->stream->dict)
+        for (auto it : obj->stream->dict)
         {
             flag_used_objects(it.second, table);
         }
@@ -565,19 +565,19 @@ static void update_obj_ref(PdfObject *obj, ObjectTable &table)
     case PDF_OBJ_NULL:
         return;
     case PDF_OBJ_ARRAY:
-for (auto it : *obj->array)
+        for (auto it : *obj->array)
         {
             update_obj_ref(it, table);
         }
         return;
     case PDF_OBJ_DICT:
-for (auto it : *obj->dict)
+        for (auto it : *obj->dict)
         {
             update_obj_ref(it.second, table);
         }
         return;
     case PDF_OBJ_STREAM:
-for (auto it : obj->stream->dict)
+        for (auto it : obj->stream->dict)
         {
             update_obj_ref(it.second, table);
         }
@@ -593,7 +593,7 @@ for (auto it : obj->stream->dict)
 
 static void updateRefs(PdfDocument &doc)
 {
-for (auto& page : doc.page_list)  // page.minor must be set before page.major
+    for (auto& page : doc.page_list)  // page.minor must be set before page.major
     {
         page.minor = doc.obj_table[page.major].minor;
         page.major = doc.obj_table[page.major].major;
@@ -660,7 +660,7 @@ static void deleteUnusedObjects(PdfDocument &doc)
 void
 PdfDocument:: applyTransformations()
 {
-for (auto &page : page_list)
+    for (auto &page : page_list)
     {
         page.applyTransformation();
     }

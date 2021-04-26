@@ -1,7 +1,7 @@
 /* This file is a part of pdfcook program, which is GNU GPLv2 licensed */
+#include "common.h"
 #include "doc_edit.h"
 #include "debug.h"
-#include "common.h"
 #include <algorithm>// sort()
 
 PageRange:: PageRange ()
@@ -29,7 +29,7 @@ void PageRanges:: append (PageRange range)
 
 void PageRanges:: initPageNums (int max_page_num)
 {
-for (PageRange range : array)
+    for (PageRange range : array)
     {
         switch (range.type)
         {
@@ -104,7 +104,7 @@ bool doc_pages_delete (PdfDocument &doc, PageRanges &pages)
 {
     pages.sort();
     int deleted = 0;
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         doc.page_list.remove(page_num-1-deleted);
         deleted++;
@@ -116,7 +116,7 @@ bool doc_pages_arrange (PdfDocument &doc, PageRanges &pages)
 {
     PageList pg_list = doc.page_list;//copies page list
     doc.page_list.clear();
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         if (page_num > pg_list.count())
             return false;
@@ -147,7 +147,7 @@ bool doc_pages_number (PdfDocument &doc, PageRanges &pages,
     }
     Font font = doc.newFontObject(font_name);
 
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         if (page_num-start<1)
             continue;
@@ -169,7 +169,7 @@ bool doc_pages_text (PdfDocument &doc, PageRanges &pages,
     Point poz;
     Font font = doc.newFontObject(font_name);
 
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];// page index = page_num -1
         Rect page_size = page.pageSize();
@@ -182,7 +182,7 @@ for (int page_num : pages)
 
 bool doc_pages_crop (PdfDocument &doc, PageRanges &pages, Rect crop_area)
 {
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         page.crop(crop_area);
@@ -192,7 +192,7 @@ for (int page_num : pages)
 
 bool doc_pages_transform(PdfDocument &doc, PageRanges &pages, Matrix mat)
 {
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];// page index = page_num -1
         page.transform(mat);
@@ -207,7 +207,7 @@ bool doc_pages_translate(PdfDocument &doc, PageRanges &pages, float x, float y)
     Matrix  matrix;
     matrix.translate(x,y);
 
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         Rect page_size = page.pageSize();
@@ -236,7 +236,7 @@ bool doc_pages_scaleto (PdfDocument &doc, PageRanges &pages, Rect paper,
     avail_w = bbox.right.x - bbox.left.x;
     avail_h = bbox.right.y - bbox.left.y;
 
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         Rect page_size = page.pageSize();
@@ -272,7 +272,7 @@ for (int page_num : pages)
 
 bool doc_pages_set_paper_size (PdfDocument &doc, PageRanges &pages, Rect paper)
 {
-for (int page_num : pages)
+    for (int page_num : pages)
     {
         PdfPage &page = doc.page_list[page_num-1];
         page.paper = paper;
@@ -358,7 +358,7 @@ bool set_paper_from_name(Rect &paper, std::string name, Orientation orientation)
 {
     transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-for (auto &paper_size : paper_sizes)
+    for (auto &paper_size : paper_sizes)
     {
         if (paper_size.name == name)
         {
@@ -383,7 +383,7 @@ void paper_set_orientation (Rect &paper, Orientation orientation)
 
 void print_paper_sizes()
 {
-for (auto &paper_size : paper_sizes)
+    for (auto &paper_size : paper_sizes)
     {
         fprintf(stderr, "%s\n", paper_size.name.c_str());
     }

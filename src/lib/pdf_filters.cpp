@@ -101,7 +101,7 @@ try_comp:
 }
 
 
-#ifdef HAVE_LZW
+#if (HAVE_LZW)
 #define DICT_LEN 4096
 struct lzw_dict
 {

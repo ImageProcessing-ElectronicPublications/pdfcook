@@ -1,43 +1,6 @@
 /* This file is a part of pdfcook program, which is GNU GPLv2 licensed */
 #include "common.h"
 
-/*
-char * strtoupper(char * s){
-    char * S = s;
-    for(S=s;*S;++S){
-        *S=toupper(*S);
-    }
-    return s;
-}
-
-char * strlower(char * s){
-    char * S = s;
-    for(S=s;*S;++S){
-        *S=tolower(*S);
-    }
-    return s;
-}
-
-char * skipwhspaces(char * s){
-    while (isspace((int)(*s))){
-        ++s;
-    }
-    return s;
-}
-
-int strint(char *what, char *from[]){
-    int i;
-    what = skipwhspaces(what);
-
-    for (i=0; *(from + i); ++i){
-        if (starts(what, from[i])){
-            return i;
-        }
-    }
-    return -1;
-}
-*/
-
 // read a big endian integer provided as char array
 int arr2int(char *arr, int len)
 {
@@ -47,11 +10,11 @@ int arr2int(char *arr, int len)
         tmp[4-len+i] = arr[i];
     }
     // network byte order is big endian, eg. int 16 is stored as 0x000010 in 3 bytes
-    return ((size_t)tmp[0]<<24 | (size_t)tmp[1]<<16 | (size_t)tmp[2]<<8 | (size_t)tmp[3] );
+    return ((uint)tmp[0]<<24 | (uint)tmp[1]<<16 | (uint)tmp[2]<<8 | (uint)tmp[3] );
 }
 
 
-#ifndef HAVE_ASPRINTF
+#if (!HAVE_ASPRINTF)
 #include <stdarg.h>
 int asprintf(char **strp, const char *fmt, ...)
 {
