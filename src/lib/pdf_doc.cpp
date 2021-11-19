@@ -4,6 +4,8 @@
 #include "debug.h"
 #include <set>
 
+bool repair_mode = false;
+
 static void updateRefs(PdfDocument &doc);
 static void deleteUnusedObjects(PdfDocument &doc);
 
@@ -84,11 +86,11 @@ PdfDocument:: ~PdfDocument()
 bool PdfDocument:: getPdfHeader (MYFILE *f, char *line)
 {
     int major=1, minor=4;
-    long i;
+    char *s;
     // read until %PDF- or EOF is reached
-    while ( ((i=myfgets(line, LLEN, f, NULL))!=EOF) && (!starts(line, "%PDF-")) );
+    while ( (s=myfgets(line, LLEN, f))!=NULL && (!starts(line, "%PDF-")) );
 
-    if (i==EOF) return false;
+    if (s==NULL) return false;
     // get pdf version
     char *endptr;
     major = strtol(line+5, &endptr, 10);
@@ -167,7 +169,8 @@ bool PdfDocument:: getPdfTrailer (MYFILE *f, char *line, long offset)
             return false;
         } // this->trailer = Prev trailer, p_trailer = current trailer
     }
-    p_trailer->dict->filter(trailer_filter);
+    if (not repair_mode)
+        p_trailer->dict->filter(trailer_filter);
     this->trailer->dict->merge(p_trailer->dict);
     delete p_trailer;
     return true;
@@ -175,6 +178,7 @@ bool PdfDocument:: getPdfTrailer (MYFILE *f, char *line, long offset)
 
 bool PdfDocument:: getAllPages(MYFILE *f)
 {
+    repair_mode = this->repair_mode;
     PdfObject *pobj = trailer->dict->get("Root");//get Catalog
 
     if (not isRef(pobj))
@@ -182,7 +186,8 @@ bool PdfDocument:: getAllPages(MYFILE *f)
         message(FATAL,"Trailer dictionary doesn't contain Root entry");
     }
     pobj = obj_table.getObject(pobj->indirect.major, pobj->indirect.minor);
-    pobj->dict->filter(catalog_filter);
+    if (not repair_mode)
+        pobj->dict->filter(catalog_filter);
     pobj = pobj->dict->get("Pages");
     if (not isRef(pobj))
     {
@@ -205,13 +210,13 @@ bool PdfDocument:: open (const char *fname)
     {
         return false;
     }
+    message(LOG, fname);
+    debug("    Version : %d.%d", v_major, v_minor);
+    debug("    Objects : %d", obj_table.table.size());
     obj_table.readObjects(f);
     getAllPages(f);
     myfclose(f);
 
-    message(LOG, fname);
-    debug("    Version : %d.%d", v_major, v_minor);
-    debug("    Objects : %d", obj_table.table.size());
     message(LOG, "    Pages : %d", page_list.count());
     return true;
 }
@@ -316,7 +321,8 @@ bool PdfDocument:: getPdfPages(MYFILE *f, int major, int minor)
             else
                 new_page.bbox = new_page.paper;
         }
-        pages->dict->filter(page_filter);
+        if (not repair_mode)
+            pages->dict->filter(page_filter);
         new_page.major = major;
         new_page.minor = minor;
         new_page.doc = this;
@@ -536,15 +542,14 @@ static void flag_used_objects (PdfObject *obj, ObjectTable &table)
         {
             return;
         }
-        table[obj->indirect.major].used = true;
         if (table[obj->indirect.major].obj==NULL)
         {
-            // in some bad pdfs even the object is free, the object is referenced
-            message(WARN, "referencing free obj : %d %d R", obj->indirect.major, obj->indirect.minor);
-            table[obj->indirect.major].obj = new PdfObject();
-            table[obj->indirect.major].obj->type = PDF_OBJ_NULL;
+            // in some bad pdfs even if the object is free, the object is referenced
+            debug("warning : referencing free obj : %d %d R", obj->indirect.major, obj->indirect.minor);
+            obj->type = PDF_OBJ_NULL;
             return;
         }
+        table[obj->indirect.major].used = true;
         flag_used_objects(table[obj->indirect.major].obj, table);
         return;
     default:
@@ -599,7 +604,7 @@ static void updateRefs(PdfDocument &doc)
         page.major = doc.obj_table[page.major].major;
     }
     update_obj_ref(doc.trailer, doc.obj_table);
-    for (int i=0; i<doc.obj_table.count(); i++)
+    for (int i=1; i<doc.obj_table.count(); i++)  // obj 0 may be nonfree in bad pdfs, causing segfault
     {
         if (doc.obj_table[i].type)
         {
@@ -814,7 +819,8 @@ stream_to_xobj (PdfObject *contents, PdfObject *page, Rect &bbox, ObjectTable &o
             assert(0);
         }
     }
-    xobj->stream->dict.filter(xobject_filter);
+    if (not repair_mode)
+        xobj->stream->dict.filter(xobject_filter);
     return obj_table.addObject(xobj);
 }
 

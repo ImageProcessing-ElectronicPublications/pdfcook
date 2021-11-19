@@ -19,6 +19,10 @@ PLIBSO        = lib$(PNAME).so.$(VER)
 endif
 PLIB = ${PLIBA} ${PLIBSO}
 
+ifeq ($(shell uname --machine), x86_64)
+        CXXFLAGS += -fPIC
+endif
+
 SOURCESLIB = $(wildcard ${SRCS}/lib/*.cpp)
 SOURCES = $(wildcard ${SRCS}/*.cpp)
 INCLUDESLIB = $(wildcard ${SRCS}/${INCS}/*.h)

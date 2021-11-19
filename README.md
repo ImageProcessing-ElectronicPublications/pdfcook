@@ -1,3 +1,9 @@
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ImageProcessing-ElectronicPublications/pdfcook)
+![GitHub Release Date](https://img.shields.io/github/release-date/ImageProcessing-ElectronicPublications/pdfcook)
+![GitHub repo size](https://img.shields.io/github/repo-size/ImageProcessing-ElectronicPublications/pdfcook)
+![GitHub all releases](https://img.shields.io/github/downloads/ImageProcessing-ElectronicPublications/pdfcook/total)
+![GitHub](https://img.shields.io/github/license/ImageProcessing-ElectronicPublications/pdfcook)
+
 # pdfcook
 Preprinting preparation tool for PDF ebooks.  
 

@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <getopt.h>
 
+// when no commands are provided, no pdf objects are removed, dict filters not applied
 
 char pusage[][LLEN] =
 {
@@ -64,6 +65,7 @@ typedef struct
 {
     int    infile;
     int    outfile;
+    bool repair_mode = false;
     char  *commands;
 } Conf;
 
@@ -103,6 +105,7 @@ static void parseargs (int argc, char *argv[], Conf * conf)
     case 2:
         conf->infile = optind;
         conf->outfile = optind + 1;
+        conf->repair_mode = true;
         break;
     case 3:
         conf->commands = argv[optind];
@@ -166,6 +169,7 @@ int main (int argc, char *argv[])
     if (commands != NULL)
     {
         parse_commands(cmd_list, commands);
+        doc.repair_mode = conf.repair_mode;
         myfclose(commands);
         // execute command tree
         doc_exec_commands(doc, cmd_list);
@@ -178,5 +182,3 @@ int main (int argc, char *argv[])
     }
     return 0;
 }
-
-

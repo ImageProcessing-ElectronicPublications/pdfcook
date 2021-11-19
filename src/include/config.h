@@ -1,6 +1,7 @@
 #pragma once
 
-#define PROG_VERSION "0.2"
+#define PROG_VERSION "0.3"
+
 
 /* Do we have LZW decompression lib */
 #define HAVE_LZW 1

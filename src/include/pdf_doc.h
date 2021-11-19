@@ -63,6 +63,7 @@ public:
 class PdfDocument
 {
 public:
+    bool repair_mode;
     int v_major;
     int v_minor;
     Rect paper;
