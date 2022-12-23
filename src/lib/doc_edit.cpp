@@ -4,56 +4,43 @@
 #include "debug.h"
 #include <algorithm>// sort()
 
-PageRange:: PageRange ()
-{
+PageRange:: PageRange () {
     type = PAGE_SET_ALL;
-    begin = 1;
-    end = -1;
-    negative = false;
+    begin = 1; end = -1; negative = false;
 }
-PageRange:: PageRange (PageSetType _type) : PageRange()
-{
-    type = _type;
+PageRange:: PageRange (PageSetType _type) : PageRange() {
+     type = _type;
 }
-PageRange:: PageRange (int begin, int end, bool neg) : begin(begin), end(end), negative(neg)
-{
+PageRange:: PageRange (int begin, int end, bool neg) : begin(begin), end(end), negative(neg) {
     type = PAGE_SET_RANGE;
 }
 
 //------------------ List of PageRange object -------------------------
 
-void PageRanges:: append (PageRange range)
-{
+void PageRanges:: append (PageRange range) {
     array.push_back(range);
 }
 
 void PageRanges:: initPageNums (int max_page_num)
 {
-    for (PageRange range : array)
-    {
-        switch (range.type)
-        {
+    for (PageRange range : array) {
+        switch (range.type) {
         case PAGE_SET_RANGE:
-            if (range.negative)
-            {
+            if (range.negative) {
                 range.begin *= -1;
                 range.end *= -1;
             }
-            if (range.begin < 0)  // converts -1 to last page no
-            {
+            if (range.begin < 0) {// converts -1 to last page no
                 range.begin = max_page_num + range.begin + 1;
             }
-            if (range.end < 0)
-            {
+            if (range.end < 0) {
                 range.end = max_page_num + range.end + 1;
             }
-            if (range.begin <= range.end)  // eg. -> 1..5 or 4..4
-            {
+            if (range.begin <= range.end) {// eg. -> 1..5 or 4..4
                 for (int i=range.begin; i<=range.end /*&& i<=max_page_num*/; i++)
                     page_num_array.push_back(i);
             }
-            else if (range.begin<=max_page_num)  // eg. -> 5..1
-            {
+            else if (range.begin<=max_page_num) {// eg. -> 5..1
                 for (int i=range.begin; i>=range.end; i--)
                     page_num_array.push_back(i);
             }
@@ -74,28 +61,22 @@ void PageRanges:: initPageNums (int max_page_num)
     }
 }
 
-static bool sort_func (int i, int j)
-{
-    return i<j;
-}
+static bool sort_func (int i, int j) { return i<j; }
 
 void PageRanges:: sort()
 {
     std::sort(page_num_array.begin(), page_num_array.end(), sort_func);
 }
 
-void PageRanges:: clear()
-{
+void PageRanges:: clear() {
     array.clear();
     page_num_array.clear();
 }
 
-PageNumIter PageRanges:: begin()
-{
+PageNumIter PageRanges:: begin() {
     return page_num_array.begin();
 }
-PageNumIter PageRanges:: end()
-{
+PageNumIter PageRanges:: end() {
     return page_num_array.end();
 }
 
@@ -104,8 +85,7 @@ bool doc_pages_delete (PdfDocument &doc, PageRanges &pages)
 {
     pages.sort();
     int deleted = 0;
-    for (int page_num : pages)
-    {
+    for (int page_num : pages) {
         doc.page_list.remove(page_num-1-deleted);
         deleted++;
     }
@@ -116,8 +96,7 @@ bool doc_pages_arrange (PdfDocument &doc, PageRanges &pages)
 {
     PageList pg_list = doc.page_list;//copies page list
     doc.page_list.clear();
-    for (int page_num : pages)
-    {
+    for (int page_num : pages) {
         if (page_num > pg_list.count())
             return false;
         PdfPage page = pg_list[page_num-1];
@@ -127,7 +106,7 @@ bool doc_pages_arrange (PdfDocument &doc, PageRanges &pages)
 }
 
 bool doc_pages_number (PdfDocument &doc, PageRanges &pages,
-                       int x, int y, int start, const char *text, int size, const char *font_name)
+                    int x, int y, int start, const char *text, int size, const char *font_name)
 {
     start -= 1;// this will help to calc page number to print
     Point poz;
@@ -135,26 +114,23 @@ bool doc_pages_number (PdfDocument &doc, PageRanges &pages,
     // make sure that given text contains a %d, which is replaced by page number
     const char *p1 = strstr(text, "%d");// find %d in the given text
     const char *p2 = strstr(text, "%");// first % is followed by d
-    if (p1==NULL || p1!=p2)
-    {
+    if (p1==NULL || p1!=p2){
         message(ERROR, "text does not contain %%d");
         return false;
     }
     p2 = strstr(p1+1, "%");// no other % character in string
-    if (p2!=NULL)
-    {
+    if (p2!=NULL){
         return false;
     }
     Font font = doc.newFontObject(font_name);
 
-    for (int page_num : pages)
-    {
+    for (int page_num : pages) {
         if (page_num-start<1)
             continue;
         PdfPage &page = doc.page_list[page_num-1];// page index = page_num -1
         Rect page_size = page.pageSize();
         poz.x = (x!=-1) ? page_size.left.x +x :
-                page_size.left.x + (page_size.right.x - page_size.left.x)/2;
+                        page_size.left.x + (page_size.right.x - page_size.left.x)/2;
         poz.y = (y!=-1) ? page_size.left.y + y : page_size.left.y + size+10;
         asprintf(&str, text, page_num-start);
         page.drawText(str, poz, size, font);
@@ -164,13 +140,12 @@ bool doc_pages_number (PdfDocument &doc, PageRanges &pages,
 }
 
 bool doc_pages_text (PdfDocument &doc, PageRanges &pages,
-                     int x, int y, const char *text, int size, const char *font_name)
+                    int x, int y, const char *text, int size, const char *font_name)
 {
     Point poz;
     Font font = doc.newFontObject(font_name);
 
-    for (int page_num : pages)
-    {
+    for (int page_num : pages) {
         PdfPage &page = doc.page_list[page_num-1];// page index = page_num -1
         Rect page_size = page.pageSize();
         poz.x = page_size.left.x + x;
@@ -182,8 +157,7 @@ bool doc_pages_text (PdfDocument &doc, PageRanges &pages,
 
 bool doc_pages_crop (PdfDocument &doc, PageRanges &pages, Rect crop_area)
 {
-    for (int page_num : pages)
-    {
+    for (int page_num : pages){
         PdfPage &page = doc.page_list[page_num-1];
         page.crop(crop_area);
     }
@@ -192,8 +166,7 @@ bool doc_pages_crop (PdfDocument &doc, PageRanges &pages, Rect crop_area)
 
 bool doc_pages_transform(PdfDocument &doc, PageRanges &pages, Matrix mat)
 {
-    for (int page_num : pages)
-    {
+    for (int page_num : pages) {
         PdfPage &page = doc.page_list[page_num-1];// page index = page_num -1
         page.transform(mat);
     }
@@ -207,8 +180,7 @@ bool doc_pages_translate(PdfDocument &doc, PageRanges &pages, float x, float y)
     Matrix  matrix;
     matrix.translate(x,y);
 
-    for (int page_num : pages)
-    {
+    for (int page_num : pages) {
         PdfPage &page = doc.page_list[page_num-1];
         Rect page_size = page.pageSize();
         // this transforms page content, bbox and paper size
@@ -236,8 +208,7 @@ bool doc_pages_scaleto (PdfDocument &doc, PageRanges &pages, Rect paper,
     avail_w = bbox.right.x - bbox.left.x;
     avail_h = bbox.right.y - bbox.left.y;
 
-    for (int page_num : pages)
-    {
+    for (int page_num : pages){
         PdfPage &page = doc.page_list[page_num-1];
         Rect page_size = page.pageSize();
         // using paper size instead of bounding box size, because viewers show paper
@@ -272,8 +243,7 @@ bool doc_pages_scaleto (PdfDocument &doc, PageRanges &pages, Rect paper,
 
 bool doc_pages_set_paper_size (PdfDocument &doc, PageRanges &pages, Rect paper)
 {
-    for (int page_num : pages)
-    {
+    for (int page_num : pages){
         PdfPage &page = doc.page_list[page_num-1];
         page.paper = paper;
     }
@@ -281,19 +251,17 @@ bool doc_pages_set_paper_size (PdfDocument &doc, PageRanges &pages, Rect paper)
 }
 
 
-typedef struct
-{
-    std::string name;
-    float width;
-    float height;
+typedef struct {
+   std::string name;
+   float width;
+   float height;
 } PaperSize;
 
 /* list of supported paper sizes.
  all format names must be in lowercase.
  sizes are in points (1/72 inch)
 */
-static std::list<PaperSize> paper_sizes(
-{
+static std::list<PaperSize> paper_sizes({
     { "a0", 2382, 3369 },   // 84.1cm * 118.8cm
     { "a1", 1684, 2382 },   // 59.4cm * 84.1cm
     { "a2", 1191, 1684 },   // 42cm * 59.4cm
@@ -358,10 +326,8 @@ bool set_paper_from_name(Rect &paper, std::string name, Orientation orientation)
 {
     transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-    for (auto &paper_size : paper_sizes)
-    {
-        if (paper_size.name == name)
-        {
+    for (auto &paper_size : paper_sizes) {
+        if (paper_size.name == name) {
             paper.left = Point(0, 0);
             paper.right = Point(paper_size.width, paper_size.height);
             paper_set_orientation(paper, orientation);
@@ -375,16 +341,14 @@ void paper_set_orientation (Rect &paper, Orientation orientation)
 {
     // switch width & height if landscape is required
     if ( (orientation==ORIENT_PORTRAIT && paper.isLandscape())
-            or (orientation==ORIENT_LANDSCAPE && (not paper.isLandscape())) )
-    {
+          or (orientation==ORIENT_LANDSCAPE && (not paper.isLandscape())) ) {
         paper.right = Point(paper.right.y, paper.right.x);
     }
 }
 
 void print_paper_sizes()
 {
-    for (auto &paper_size : paper_sizes)
-    {
+    for (auto &paper_size : paper_sizes) {
         fprintf(stderr, "%s\n", paper_size.name.c_str());
     }
 }

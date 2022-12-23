@@ -16,6 +16,7 @@ sudo make install
 
 ### Features
 * PDF v1.7 support  
+* Decrypt encrypted PDFs  
 * Join or Split PDFs  
 * Scale to any paper size, with specified margin  
 * Write Page numbers  
@@ -23,6 +24,7 @@ sudo make install
 * Transform pages (rotate, flip, move)  
 * Booklet format arrange  
 * 2 or 4 pages per page (2-up, 4-up)  
+* More readable output syntax for easy debugging  
 
 ### Usage
 See manual page (PDF or man page) for detailed usage  

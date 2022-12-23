@@ -3,8 +3,7 @@
 #include "pdf_doc.h"
 #include <list>
 
-typedef enum
-{
+typedef enum {
     PAGE_SET_ALL,
     PAGE_SET_ODD,
     PAGE_SET_EVEN,
@@ -27,8 +26,7 @@ public:
 
 typedef std::vector<int>::iterator PageNumIter;
 
-class PageRanges
-{
+class PageRanges {
 public:
     std::list<PageRange> array;
     std::vector<int> page_num_array;
@@ -55,7 +53,7 @@ bool doc_pages_delete(PdfDocument &doc, PageRanges &pages);
 bool doc_pages_arrange(PdfDocument &doc, PageRanges &pages);
 
 bool doc_pages_number(PdfDocument &doc, PageRanges &pages,
-                      int x, int y, int start, const char *text, int size, const char *font);
+                    int x, int y, int start, const char *text, int size, const char *font);
 bool doc_pages_text(PdfDocument &doc, PageRanges &pages,
                     int x, int y, const char *text, int size, const char *font);
 
@@ -65,8 +63,7 @@ bool doc_pages_set_paper_size (PdfDocument &doc, PageRanges &pages, Rect paper);
 
 bool add_new_paper_size (std::string name, float w, float h);
 
-typedef enum
-{
+typedef enum {
     ORIENT_AUTO,
     ORIENT_PORTRAIT,
     ORIENT_LANDSCAPE

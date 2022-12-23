@@ -16,14 +16,12 @@ void message(int type, const char *format, ...)
     char *bufptr = msgbuf ; /* message buffer pointer */
     int pos = 0;
     // should put newline if column is not 0 in terminal
-    if (type==WARN)
-    {
+    if (type==WARN) {
         snprintf(bufptr, 11, "warning : ");
         bufptr += 10;
         pos += 10;
     }
-    else if (type==ERROR || type==FATAL)
-    {
+    else if (type==ERROR || type==FATAL) {
         snprintf(bufptr, 9, "error : ");
         bufptr += 8;
         pos += 8;

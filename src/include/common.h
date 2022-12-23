@@ -4,12 +4,15 @@
 #define _GNU_SOURCE// for asprintf()
 #endif
 #include "config.h"
+#include <string>
 #include <cstdio>
 #include <cstring>// memcpy and other string func
 #include <cassert>
 #include <cmath>
 //#include <cstdint> // uint32_t type
 //#include <cctype> // toupper() isspace() etc
+
+extern bool repair_mode;
 
 typedef unsigned int uint;
 // M_PI is not available in mingw32, so using and defining PI
@@ -27,3 +30,18 @@ int asprintf(char **strp, const char *fmt, ...);
 
 // read a big endian integer provided as char array
 int arr2int(char *arr, int len);
+
+// like %f but strips trailing zeros
+std::string double2str(double num);
+
+// like malloc() but exits program when fails. use this where little memroy
+// is needed, and where we can not ignore the allocation failure
+inline void* malloc2(size_t size)
+{
+    void *ptr = malloc(size);
+    if (size!=0 && !ptr){
+        fprintf(stdout, "error : malloc() failed !\n");
+        exit(1);
+    }
+    return ptr;
+}

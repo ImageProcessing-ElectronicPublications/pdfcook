@@ -9,7 +9,7 @@ AR = ar
 INSTALL = install
 RM = rm -f
 VER           = 0
-VERB          = 1
+VERB          = 4
 ifeq ($(OS),Windows_NT)
 PLIBA         = $(PNAME).a
 PLIBSO        = $(PNAME).$(VER).dll
@@ -19,7 +19,7 @@ PLIBSO        = lib$(PNAME).so.$(VER)
 endif
 PLIB = ${PLIBA} ${PLIBSO}
 
-ifeq ($(shell uname --machine), x86_64)
+ifneq ($(shell uname -m), i386)
         CXXFLAGS += -fPIC
 endif
 

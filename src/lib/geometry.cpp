@@ -6,14 +6,6 @@
 static Point min_coordinate (Point p1, Point p2);
 static Point max_coordinate (Point p1, Point p2);
 
-static float roundOff(float num)
-{
-    if (num<1.0f)
-    {
-        return ((int)(num * 1000000.0))/1000000.0;
-    }
-    return num;
-}
 
 Point:: Point() : x(0), y(0)
 { }
@@ -37,42 +29,37 @@ bool Rect:: getFromObject(PdfObject *src, ObjectTable &obj_table)
 {
     if (!src)
         return false;
-    if (isRef(src))
-    {
+    if (isRef(src)) {
         src = obj_table.getObject(src->indirect.major, src->indirect.minor);
     }
     assert(isArray(src));
     //message(WARN, "failed to get Rect : obj type isn't array");
     int val, i=0;
-    for (auto iter=src->array->begin(); iter!=src->array->end(); iter++, i++)
-    {
+    for (auto iter=src->array->begin(); iter!=src->array->end(); iter++, i++){
         PdfObject *obj = (*iter);
-        if (!isInt(obj) && !isReal(obj))
-        {
+        if (!isInt(obj) && !isReal(obj)){
             message(WARN,"failed to get Rect : array item isn't number");
             continue;
         }
         val = round( isReal(obj) ? (obj->real) : (obj->integer));
-        switch (i)
-        {
-        case 0:
-            left.x = val;
-            break;
-        case 1:
-            left.y = val;
-            break;
-        case 2:
-            right.x = val;
-            break;
-        case 3:
-            right.y = val;
-            break;
-        default:
-            message(WARN,"wrong boundaries");
+        switch (i) {
+            case 0:
+                left.x = val;
+                break;
+            case 1:
+                left.y = val;
+                break;
+            case 2:
+                right.x = val;
+                break;
+            case 3:
+                right.y = val;
+                break;
+            default:
+                message(WARN,"wrong boundaries");
         }
     }
-    if (i<4)
-    {
+    if (i<4){
         message(FATAL, "wrong boundaries");//todo warn only
     }
     return true;
@@ -101,23 +88,16 @@ Matrix:: Matrix(float m00, float m01, float m02,
                 float m10, float m11, float m12,
                 float m20, float m21, float m22)
 {
-    mat[0][0]=m00;
-    mat[0][1]=m01;
-    mat[0][2]=m02;
-    mat[1][0]=m10;
-    mat[1][1]=m11;
-    mat[1][2]=m12;
-    mat[2][0]=m20;
-    mat[2][1]=m21;
-    mat[2][2]=m22;
+    mat[0][0]=m00; mat[0][1]=m01; mat[0][2]=m02;
+    mat[1][0]=m10; mat[1][1]=m11; mat[1][2]=m12;
+    mat[2][0]=m20; mat[2][1]=m21; mat[2][2]=m22;
 }
 
 bool Matrix:: isIdentity()
 {
     if (   mat[0][0]==1 && mat[0][1]==0 && mat[0][2]==0
-            && mat[1][0]==0 && mat[1][1]==1 && mat[1][2]==0
-            && mat[2][0]==0 && mat[2][1]==0 && mat[2][2]==1)
-    {
+        && mat[1][0]==0 && mat[1][1]==1 && mat[1][2]==0
+        && mat[2][0]==0 && mat[2][1]==0 && mat[2][2]==1) {
         return true;
     }
     return false;
@@ -127,13 +107,10 @@ bool Matrix:: isIdentity()
 void Matrix:: multiply (const Matrix &B)
 {
     Matrix AB;
-    for (int i=0; i<3; ++i) //each row in 1st matrix
-    {
-        for (int j=0; j<3; ++j) // each col in 2nd matrix
-        {
+    for (int i=0; i<3; ++i){//each row in 1st matrix
+        for (int j=0; j<3; ++j){// each col in 2nd matrix
             AB.mat[i][j] = 0;
-            for (int k=0; k<3; ++k)
-            {
+            for (int k=0; k<3; ++k){
                 AB.mat[i][j] += mat[i][k] * B.mat[k][j];
             }
         }
@@ -151,8 +128,8 @@ void Matrix:: scale (float scale)
 void Matrix:: rotate (float angle_deg)
 {
     // rounding off so that value of cos90 becomes zero instead of 6.12323e-17
-    float sinx = roundOff(sin((angle_deg*PI)/180.0));
-    float cosx = roundOff(cos((angle_deg*PI)/180.0));
+    float sinx = sin((angle_deg*PI)/180.0);
+    float cosx = cos((angle_deg*PI)/180.0);
     Matrix matrix(cosx,-sinx,0, sinx,cosx,0, 0,0,1);// rotation along z axis
     this->multiply(matrix);
 }

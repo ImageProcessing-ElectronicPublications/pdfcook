@@ -3,38 +3,13 @@
 #include <cstring>
 #include "fileio.h"
 #include "debug.h"
+#include "common.h"
 
 // 16KB buffer for MYFILE
 #define BUFSIZE 16384
 
 #define crlf(x) (((x)=='\r') || ((x)=='\n'))
 
-// it is getc() for MYFILE that is created from file (not from string)
-// it gets called only when re-reading of the whole buffer needed.
-int slow_mygetc(MYFILE *f)
-{
-    size_t len;
-
-    if (myfeof(f))
-    {
-        return EOF;
-    }
-    len = fread(f->buf, sizeof(char), BUFSIZE, f->f);
-    f->pos += len;
-    f->ptr = f->buf;
-    f->end = f->buf + (len>0 ? len:0);
-    if (len!=BUFSIZE)
-    {
-        f->eof = EOF;
-    }
-    if (myfeof(f))
-    {
-        return EOF;
-    }
-    f->ptr = f->buf;
-    f->end = f->buf + len;
-    return *(f->ptr)++;
-}
 
 MYFILE * stropen(const char *str)
 {
@@ -47,32 +22,26 @@ MYFILE * stropen(const char *str)
 // read the whole string in buffer, MYFILE uses the buffer to read data
 MYFILE * streamopen(const char *str, size_t len)
 {
-    MYFILE * f;
-    if (str==NULL)
-    {
+    if (str==NULL){
         return NULL;
     }
-    f = (MYFILE *) malloc (sizeof(MYFILE));
-    if (f==NULL)
-    {
-        return NULL;
-    }
-    f->row = 1;
-    f->column = 0;
-    f->lastc = 0;
+    MYFILE *f = (MYFILE*) malloc2(sizeof(MYFILE));
+    f->f = NULL;
+
     // allocate buffer and read whole string
-    f->buf = (char *) malloc(len+1);
-    if (f->buf==NULL)
-    {
+    f->buf = (unsigned char *) malloc(len);
+    if (f->buf==NULL){
         free(f);
         return NULL;
     }
-    memcpy(f->buf, str, len+1);
-    f->pos = len;// means we have read whole string
-    f->f = NULL;
+    memcpy(f->buf, str, len);
     f->ptr = f->buf;
     f->end = f->buf + len;
-    f->eof = EOF;
+    f->pos = len;
+    f->eof = EOF;// means no data left to read from string
+    f->row = 1;
+    f->column = 0;
+    f->lastc = 0;
     return f;
 }
 
@@ -80,28 +49,23 @@ MYFILE * streamopen(const char *str, size_t len)
  this buffer is used to store and read file data. */
 MYFILE * myfopen(const char *filename, const char *mode)
 {
-    MYFILE *f = (MYFILE *) malloc(sizeof(MYFILE));
-    if (f==NULL)
-    {
-        return NULL;
-    }
-    f->buf = (char *) malloc(BUFSIZE);
-    if (f->buf==NULL)
-    {
-        free(f);
-        return NULL;
-    }
+    MYFILE *f = (MYFILE*) malloc2(sizeof(MYFILE));
+
     f->f = fopen(filename, mode);
 
-    if (f->f==NULL)
-    {
-        free(f->buf);
+    if (f->f==NULL){
         free(f);
         return NULL;
     }
+
+    f->buf = (unsigned char*) malloc(BUFSIZE);
+    if (f->buf==NULL){
+        fclose(f->f);
+        free(f);
+        return NULL;
+    }
+    f->ptr = f->end = f->buf;// this indicates we have not read buffer
     f->pos = 0;
-    f->ptr = f->buf + BUFSIZE;// this indicates we have not read buffer
-    f->end = f->buf + BUFSIZE;
     f->eof = 0;
     return f;
 }
@@ -112,8 +76,7 @@ int myfclose(MYFILE *stream)
     int ret = stream->f ? fclose(stream->f) : 0;
     free(stream->buf);
     free(stream);
-    if (ret==EOF)
-    {
+    if (ret==EOF){
         return -1;
     }
     return 0;
@@ -123,67 +86,71 @@ int myfseek(MYFILE *stream, long offset, int origin)
 {
     if (stream->f==NULL)
     {
-        switch (origin)
-        {
-        case SEEK_SET:
-            stream->ptr = stream->buf + offset;
-            break;
-        case SEEK_END:
-            stream->ptr = stream->end - offset;
-            break;
-        case SEEK_CUR:
-            stream->ptr = stream->ptr + offset;
-            break;
+        switch (origin){
+            case SEEK_SET:
+                stream->ptr = stream->buf + offset;
+                break;
+            case SEEK_END:
+                stream->ptr = stream->end + offset;
+                break;
+            case SEEK_CUR:
+                stream->ptr = stream->ptr + offset;
+                break;
         }
-        if (stream->ptr >= stream->end)
-        {
-            return EOF;
+        if (stream->ptr < stream->buf || stream->ptr > stream->end){
+            return -1;
         }
         return 0;
     }
-    if (fseek(stream->f,offset,origin)!=EOF)
-    {
+    stream->eof = fseek(stream->f, offset, origin);
+    if (stream->eof==0) {
         stream->pos = ftell(stream->f);
-        stream->ptr = stream->buf + BUFSIZE;
-        stream->end = stream->buf + BUFSIZE;
-        stream->eof = 0;
+        stream->ptr = stream->end = stream->buf;
+        return 0;
     }
-    else  // already reached end, so could not read any byte
-    {
-        stream->eof = EOF;
+    stream->eof = EOF;
+    return -1;
+}
+
+// it gets called only when re-reading of the whole buffer needed.
+int slow_mygetc(MYFILE *f)
+{
+    if (myfeof(f)){
+        return EOF;
     }
-    return stream->eof;
+    // does not reach here if MYFILE created from file (not from string)
+    size_t len = fread(f->buf, 1, BUFSIZE, f->f);
+    f->pos += len;
+    f->ptr = f->buf;
+    f->end = f->buf + len;
+    if (len!=BUFSIZE){
+        f->eof = EOF;
+        if (len==0)
+            return EOF;
+    }
+    return *(f->ptr)++;
 }
 
 
 size_t myfread (void *where, size_t size, size_t nmemb, MYFILE *stream)
 {
-    long poz = myftell(stream);
     char *str = (char *) where;
     size_t read;
     int c;
-    if (stream->f != NULL)
-    {
-        if (myfseek(stream, poz, SEEK_SET)==-1)
-        {
+    long pos = myftell(stream);
+
+    if (stream->f != NULL){
+        if (myfseek(stream, pos, SEEK_SET)==-1){
             message(FATAL,"seek error");
         }
         read = fread(where, size, nmemb, stream->f);
-        if (read==nmemb)
-        {
-            if (myfseek(stream, poz+read, SEEK_SET)==-1)
-            {
-                message(FATAL, "seek error");
-            }
-            return read;
-        }
+        stream->pos = ftell(stream->f);
+        stream->ptr = stream->end = stream->buf;
         return read;
     }
     // if MYFILE was created from string
-    for (read=0; read<size*nmemb; ++read)
-    {
-        if ((c=mygetc(stream))==EOF)
-        {
+    for (read=0; read<size*nmemb; ++read){
+        if ((c=mygetc(stream))==EOF){
             return read/size;
         }
         *str = c;
@@ -204,16 +171,13 @@ char* myfgets(char *line, int len, MYFILE *f)
     --len;
     int llen = len-1;
 
-    if (len<=0 || myfeof(f))
-    {
+    if (len<=0 || myfeof(f)) {
         *line = 0;
         return NULL;
     }
-    do
-    {
+    do {
         *line = mygetc(f);
-        ++line;
-        --len;
+        ++line; --len;
     }
     while (len && !myfeof(f) &&  !crlf(*(line-1)));
 
@@ -224,20 +188,28 @@ char* myfgets(char *line, int len, MYFILE *f)
         return NULL;
     }
 
-    switch (*(line-1))
-    {
-    case '\n':
-        *(line-1) = 0;
-        break;
-    case '\r':
-        *(line-1) = 0;
+    switch (*(line-1)) {
+        case '\n':
+            *(line-1) = 0;
+            break;
+        case '\r':
+            *(line-1) = 0;
 
-        if (mygetc(f)!='\n')
-        {
-            myungetc(f);
-        }
-        break;
+            if (mygetc(f)!='\n') {
+                myungetc(f);
+            }
+            break;
     }
     *line = 0;
     return buf;
+}
+
+bool file_exist (const char *name)
+{
+    FILE *f = fopen(name,"r");
+    if (f==NULL) {
+        return false;
+    }
+    fclose(f);
+    return true;
 }

@@ -12,8 +12,7 @@ public:
     Point(float x, float y);
 };
 
-class Rect
-{
+class Rect {
 public:
     Point left; // bottom left (0,0)
     Point right;// top right

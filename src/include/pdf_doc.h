@@ -2,12 +2,12 @@
 /* This file is a part of pdfcook program, which is GNU GPLv2 licensed */
 #include "pdf_objects.h"
 #include "geometry.h"
+#include "crypt.h"
 #include <cassert>
 
 class PdfDocument;
 
-typedef struct
-{
+typedef struct {
     const char *name;
     int major;
     int minor;
@@ -53,8 +53,7 @@ public:
     PageIter begin();
     PageIter end();
     // allows indexing operator
-    PdfPage& operator[] (int index)
-    {
+    PdfPage& operator[] (int index) {
         assert( index>=0 && index<(int)array.size() );
         return array[index];
     }
@@ -63,7 +62,7 @@ public:
 class PdfDocument
 {
 public:
-    bool repair_mode;
+    const char *filename;
     int v_major;
     int v_minor;
     Rect paper;
@@ -74,6 +73,11 @@ public:
     ObjectTable obj_table;
     PdfObject *trailer;
 
+    bool encrypted;
+    bool have_encrypt_info;
+    bool decryption_supported;
+    Crypt crypt;
+
     PdfDocument();
     ~PdfDocument();
 
@@ -82,6 +86,7 @@ public:
     bool getAllPages (MYFILE *f);
     bool getPdfPages (MYFILE *f, int major, int minor);
     bool open (const char *fname);
+    bool decrypt(const char *password);
     void mergeDocument(PdfDocument &doc);
 
     void putPdfPages();
@@ -91,3 +96,14 @@ public:
     bool newBlankPage(int page_num);
     void applyTransformations();
 };
+
+/* -------- Handling Errors -----------
+1. free obj is referenced by an indirect obj
+sol. - before saving those indirect ref objs are changed to null obj.
+
+2. object offset is 0 for nonfree obj in Object table entry
+sol. - the obj is set a null obj
+
+3. obj no 0 is nonfree obj in object table
+sol. - obj 0 is set as free obj
+*/
